@@ -36,7 +36,7 @@ const {
 router.post("/brand", auth, uploadFiles("image"), addBrand);
 router.get("/brands", auth, getBrands);
 router.get("/brand/:id", auth, getBrand);
-router.patch("/brand/:id", auth, uploadFiles("image"), updateBrand);
+router.patch("/brand/:id", auth, updateBrand);
 router.delete("/brand/:id", auth, deleteBrand);
 
 const {

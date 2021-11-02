@@ -7,6 +7,7 @@ exports.addBrand = async (req, res) => {
     console.log(data);
     const newBrand = await Brands.create({
       ...data,
+      viewCount: 0,
       image: req.files.image[0].filename,
       userId: req.users.id,
     });
@@ -22,17 +23,25 @@ exports.addBrand = async (req, res) => {
       })
     );
 
-    // let brandData = await Brands.findOne({
-    //   where: {
-    //     id: newBrand.id,
-    //   },
-    //   attributes: {
-    //     exclude: ["userId", "brandId", "createdAt", "updatedAt"],
-    //   },
-    // });
+    let brand = await Brands.findOne({
+      where: {
+        id: newBrand.id,
+      },
+      include: {
+        model: Links,
+        as: "link",
+        attributes: {
+          exclude: ["id", "createdAt", "updatedAt"],
+        },
+      },
+      attributes: {
+        exclude: ["userId", "brandId", "createdAt", "updatedAt"],
+      },
+    });
 
     res.send({
       status: "success",
+      data: brand,
     });
   } catch (error) {
     console.log(error);
@@ -46,12 +55,15 @@ exports.addBrand = async (req, res) => {
 //Get all data Brands
 exports.getBrands = async (req, res) => {
   try {
-    let brandData = await Brands.findAll({
+    let brands = await Brands.findAll({
+      where: {
+        userId: req.users.id,
+      },
       include: {
-        model: users,
-        as: "users",
+        model: Links,
+        as: "link",
         attributes: {
-          exclude: ["id", "role", "createdAt", "updatedAt", "password"],
+          exclude: ["brandId", "id", "createdAt", "updatedAt"],
         },
       },
       attributes: {
@@ -59,9 +71,9 @@ exports.getBrands = async (req, res) => {
       },
     });
 
-    brandData = JSON.parse(JSON.stringify(brandData));
+    brands = JSON.parse(JSON.stringify(brands));
 
-    brandData = brandData.map((item) => {
+    brands = brands.map((item) => {
       return {
         ...item,
         image: process.env.FILE_PATH + item.image,
@@ -69,7 +81,7 @@ exports.getBrands = async (req, res) => {
     });
     res.send({
       status: "success",
-      data: { Brands: brandData },
+      data: brands,
     });
   } catch (error) {
     console.log(error);
@@ -86,10 +98,10 @@ exports.getBrand = async (req, res) => {
     let brand = await Brands.findOne({
       where: { id },
       include: {
-        model: users,
-        as: "users",
+        model: Links,
+        as: "link",
         attributes: {
-          exclude: ["id", "role", "createdAt", "updatedAt", "password"],
+          exclude: ["id", "brandId", "createdAt", "updatedAt"],
         },
       },
       attributes: {
@@ -123,41 +135,37 @@ exports.updateBrand = async (req, res) => {
   const { id } = req.params;
   const data = req.body;
 
-  const schema = Joi.object({
-    title: Joi.string().required(),
-    description: Joi.string().required(),
-  });
-
-  const { error } = schema.validate(data);
-
-  if (error) {
-    return res.status(400).send({
-      status: "error",
-      message: error.details[0].message,
-    });
-  }
-
   try {
-    let brand = {
-      ...data,
-      image: req.files.image[0].filename,
-      userId: req.users.id,
-    };
+    let brandData = await Brands.findOne({
+      where: {
+        id,
+      },
+      attributes: {
+        exclude: ["id", "brandId", "createdAt", "updatedAt"],
+      },
+    });
 
-    const whereId = { where: { id } };
+    await Brands.update(
+      {
+        viewCount: brandData.viewCount + 1,
+      },
+      { where: { id } }
+    );
 
-    await Brands.update(brand, whereId);
-
-    brand = {
-      ...brand,
-      image: process.env.FILE_PATH + brand.image,
-    };
+    let brand = await Brands.findOne({
+      where: {
+        id,
+      },
+      attributes: {
+        exclude: ["id", "brandId", "createdAt", "updatedAt"],
+      },
+    });
 
     res.send({
       status: "success",
       message: `Update brand with id ${id} finished`,
       data: {
-        brand,
+        viewCount: brand.viewCount,
       },
     });
   } catch (error) {
