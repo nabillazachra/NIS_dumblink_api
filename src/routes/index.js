@@ -1,5 +1,19 @@
 const express = require("express");
 const router = express.Router();
+const multer = require("multer");
+
+const storage = multer.diskStorage({
+  destination: function (req, res, cb) {
+    cb(null, "uploads");
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + "-" + file.originalname.replace(/\s/g, ""));
+  },
+});
+
+const upload = multer({
+  storage,
+});
 
 const { auth } = require("../middlewares/auth");
 const { uploadFiles } = require("../middlewares/uploadFiles");
@@ -33,7 +47,7 @@ const {
 } = require("../controllers/brands");
 
 //init route controller brands
-router.post("/brand", auth, uploadFiles("image"), addBrand);
+router.post("/brand", auth, upload.any("image"), addBrand);
 router.get("/brands", auth, getBrands);
 router.get("/brand/:id", auth, getBrand);
 router.patch("/brand/:id", auth, updateBrand);

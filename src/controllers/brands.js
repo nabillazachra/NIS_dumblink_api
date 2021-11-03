@@ -1,5 +1,7 @@
 const { Brands, users, Links } = require("../../models");
 const Joi = require("joi");
+var crypto = require("crypto");
+var uniqueLink = crypto.randomBytes(5).toString("hex");
 
 exports.addBrand = async (req, res) => {
   const data = req.body;
@@ -7,18 +9,19 @@ exports.addBrand = async (req, res) => {
     console.log(data);
     const newBrand = await Brands.create({
       ...data,
-      uniqueLink: "http://localhost:3000",
+      uniqueLink,
       viewCount: 0,
-      image: req.files.image[0].filename,
+      image: req.files[0].filename,
       userId: req.users.id,
     });
 
-    const dataLink = JSON.parse(data.data);
+    // const dataLink = JSON.parse(data.data);
     await Promise.all(
-      dataLink.map(async (item) => {
+      data.title.map(async (item, index) => {
         await Links.create({
-          ...item,
-          logo: "testGambar",
+          title: item,
+          url: data.url[index],
+          logo: req.files[index + 1].filename,
           brandId: newBrand.id,
         });
       })
