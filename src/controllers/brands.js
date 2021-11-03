@@ -7,6 +7,7 @@ exports.addBrand = async (req, res) => {
     console.log(data);
     const newBrand = await Brands.create({
       ...data,
+      uniqueLink: "http://localhost:3000",
       viewCount: 0,
       image: req.files.image[0].filename,
       userId: req.users.id,
