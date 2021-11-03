@@ -32,7 +32,7 @@ exports.addBrand = async (req, res) => {
         model: Links,
         as: "link",
         attributes: {
-          exclude: ["id", "createdAt", "updatedAt"],
+          exclude: ["createdAt", "updatedAt"],
         },
       },
       attributes: {
